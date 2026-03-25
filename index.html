@@ -1,0 +1,698 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PG Entrance Study Tracker</title>
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0f0f13;
+    --surface: #17171f;
+    --surface2: #1e1e28;
+    --surface3: #252532;
+    --border: #2a2a38;
+    --text: #e8e8f0;
+    --text2: #9090a8;
+    --text3: #606075;
+    --accent: #7c6ff7;
+    --accent2: #5b56d4;
+    --green: #4ade80;
+    --yellow: #fbbf24;
+    --red: #f87171;
+    --blue: #60a5fa;
+    --purple: #c084fc;
+    --orange: #fb923c;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: 'Sora', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    font-size: 14px;
+  }
+
+  /* SIDEBAR */
+  .layout { display: flex; height: 100vh; overflow: hidden; }
+  .sidebar {
+    width: 240px;
+    min-width: 240px;
+    background: var(--surface);
+    border-right: 1px solid var(--border);
+    display: flex;
+    flex-direction: column;
+    padding: 16px 0;
+    overflow-y: auto;
+  }
+  .sidebar-logo {
+    padding: 0 16px 16px;
+    border-bottom: 1px solid var(--border);
+    margin-bottom: 8px;
+  }
+  .sidebar-logo h1 { font-size: 15px; font-weight: 700; color: var(--text); letter-spacing: -0.3px; }
+  .sidebar-logo p { font-size: 11px; color: var(--text3); margin-top: 2px; }
+
+  .sidebar-section { padding: 4px 8px; margin-top: 8px; }
+  .sidebar-section-label { font-size: 10px; font-weight: 600; color: var(--text3); letter-spacing: 0.8px; text-transform: uppercase; padding: 4px 8px 6px; }
+  .sidebar-item {
+    display: flex; align-items: center; gap: 8px;
+    padding: 6px 8px; border-radius: 6px; cursor: pointer;
+    font-size: 13px; color: var(--text2); transition: all 0.15s;
+  }
+  .sidebar-item:hover { background: var(--surface2); color: var(--text); }
+  .sidebar-item.active { background: var(--surface3); color: var(--text); }
+  .sidebar-item .dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+  .sidebar-item .count { margin-left: auto; font-size: 11px; color: var(--text3); font-family: 'JetBrains Mono', monospace; }
+
+  /* MAIN */
+  .main { flex: 1; overflow-y: auto; background: var(--bg); }
+  .page-header {
+    padding: 32px 40px 0;
+    border-bottom: 1px solid var(--border);
+    padding-bottom: 20px;
+    position: sticky; top: 0; background: var(--bg); z-index: 10;
+  }
+  .page-header-top { display: flex; align-items: center; justify-content: space-between; gap: 16px; flex-wrap: wrap; }
+  .page-title { font-size: 22px; font-weight: 700; letter-spacing: -0.5px; }
+  .page-subtitle { font-size: 13px; color: var(--text2); margin-top: 4px; }
+
+  .tabs {
+    display: flex; gap: 2px; margin-top: 16px;
+  }
+  .tab {
+    padding: 8px 16px; border-radius: 6px 6px 0 0; cursor: pointer;
+    font-size: 13px; color: var(--text2); transition: all 0.15s; border: 1px solid transparent;
+  }
+  .tab:hover { color: var(--text); background: var(--surface2); }
+  .tab.active { background: var(--surface); color: var(--text); border-color: var(--border); border-bottom-color: var(--bg); }
+
+  /* CONTENT */
+  .content { padding: 24px 40px; }
+
+  /* PROGRESS CARDS */
+  .stats-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-bottom: 24px; }
+  .stat-card {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: 10px; padding: 16px;
+  }
+  .stat-label { font-size: 11px; color: var(--text3); font-weight: 500; letter-spacing: 0.5px; text-transform: uppercase; }
+  .stat-val { font-size: 26px; font-weight: 700; margin-top: 4px; font-family: 'JetBrains Mono', monospace; }
+  .stat-sub { font-size: 11px; color: var(--text3); margin-top: 2px; }
+  .progress-bar { height: 4px; background: var(--border); border-radius: 2px; margin-top: 8px; overflow: hidden; }
+  .progress-fill { height: 100%; border-radius: 2px; transition: width 0.4s; }
+
+  /* EXAM BADGES */
+  .badge {
+    font-size: 10px; font-weight: 600; letter-spacing: 0.4px;
+    padding: 2px 7px; border-radius: 4px; font-family: 'JetBrains Mono', monospace;
+  }
+  .badge-pgee { background: #1a3a2a; color: #4ade80; border: 1px solid #2d5a3d; }
+  .badge-pgcat { background: #1a2a3a; color: #60a5fa; border: 1px solid #2d4a5a; }
+  .badge-bits { background: #2a1a3a; color: #c084fc; border: 1px solid #4a2d5a; }
+  .badge-all { background: #2a2a1a; color: #fbbf24; border: 1px solid #4a4a2d; }
+  .badge-high { background: #3a1a1a; color: #f87171; border: 1px solid #5a2d2d; }
+
+  /* TOPIC TABLE */
+  .section-heading {
+    display: flex; align-items: center; gap: 10px;
+    margin: 24px 0 12px;
+  }
+  .section-heading h2 { font-size: 15px; font-weight: 600; }
+  .section-divider { flex: 1; height: 1px; background: var(--border); }
+
+  .topic-group { margin-bottom: 8px; }
+  .topic-group-header {
+    display: flex; align-items: center; gap: 8px;
+    padding: 8px 12px; cursor: pointer; border-radius: 8px;
+    transition: background 0.15s; user-select: none;
+  }
+  .topic-group-header:hover { background: var(--surface); }
+  .topic-group-title { font-size: 14px; font-weight: 600; flex: 1; }
+  .chevron { font-size: 10px; color: var(--text3); transition: transform 0.2s; }
+  .chevron.open { transform: rotate(90deg); }
+
+  .topic-list { padding-left: 12px; }
+  .topic-row {
+    display: flex; align-items: center; gap: 10px;
+    padding: 7px 12px; border-radius: 6px; cursor: pointer;
+    transition: background 0.12s; border: 1px solid transparent;
+  }
+  .topic-row:hover { background: var(--surface); border-color: var(--border); }
+  .topic-row.done { opacity: 0.5; }
+  .topic-row.done .topic-name { text-decoration: line-through; color: var(--text3); }
+
+  .checkbox {
+    width: 16px; height: 16px; border-radius: 4px;
+    border: 1.5px solid var(--border); flex-shrink: 0;
+    display: flex; align-items: center; justify-content: center;
+    transition: all 0.15s; background: transparent; cursor: pointer;
+  }
+  .checkbox.checked { background: var(--accent); border-color: var(--accent); }
+  .checkbox svg { display: none; }
+  .checkbox.checked svg { display: block; }
+
+  .topic-name { flex: 1; font-size: 13px; }
+  .topic-exams { display: flex; gap: 4px; flex-wrap: wrap; }
+  .priority-dot { width: 6px; height: 6px; border-radius: 50%; flex-shrink: 0; }
+
+  /* STUDY PLAN */
+  .plan-grid { display: grid; grid-template-columns: 80px 1fr; gap: 0; }
+  .plan-week-label {
+    font-size: 11px; font-weight: 700; color: var(--text3); letter-spacing: 0.5px;
+    text-transform: uppercase; padding: 12px 12px 12px 0; border-right: 2px solid var(--border);
+    text-align: right; position: relative;
+  }
+  .plan-week-label::after {
+    content: '';
+    position: absolute; right: -5px; top: 50%;
+    transform: translateY(-50%);
+    width: 8px; height: 8px; border-radius: 50%;
+    background: var(--accent); border: 2px solid var(--bg);
+  }
+  .plan-items { padding: 8px 0 8px 20px; }
+  .plan-card {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: 8px; padding: 12px 14px; margin-bottom: 8px;
+    border-left: 3px solid var(--accent);
+  }
+  .plan-card-title { font-size: 13px; font-weight: 600; margin-bottom: 4px; }
+  .plan-card-topics { font-size: 12px; color: var(--text2); line-height: 1.6; }
+  .plan-card-tags { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 8px; }
+
+  .filter-row { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 16px; align-items: center; }
+  .filter-btn {
+    padding: 5px 12px; border-radius: 6px; cursor: pointer; font-size: 12px;
+    border: 1px solid var(--border); color: var(--text2); background: transparent; transition: all 0.15s;
+    font-family: 'Sora', sans-serif;
+  }
+  .filter-btn:hover { border-color: var(--accent); color: var(--text); }
+  .filter-btn.active { background: var(--accent); border-color: var(--accent); color: white; }
+  .filter-label { font-size: 12px; color: var(--text3); }
+
+  /* HIDDEN */
+  .tab-content { display: none; }
+  .tab-content.active { display: block; }
+
+  /* SCROLLBAR */
+  ::-webkit-scrollbar { width: 5px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+
+  .emoji { font-size: 16px; }
+</style>
+</head>
+<body>
+<div class="layout">
+  <!-- SIDEBAR -->
+  <div class="sidebar">
+    <div class="sidebar-logo">
+      <h1>📚 PG Entrance Hub</h1>
+      <p>PGEE · PGCAT · BITS HD</p>
+    </div>
+    <div class="sidebar-section">
+      <div class="sidebar-section-label">Views</div>
+      <div class="sidebar-item active" onclick="switchView('tracker')">
+        <span>🗂️</span> Syllabus Tracker
+      </div>
+      <div class="sidebar-item" onclick="switchView('plan')">
+        <span>📅</span> Study Plan
+      </div>
+      <div class="sidebar-item" onclick="switchView('priority')">
+        <span>🔥</span> Priority Topics
+      </div>
+    </div>
+    <div class="sidebar-section">
+      <div class="sidebar-section-label">Exams</div>
+      <div class="sidebar-item" onclick="filterExam('all')">
+        <span class="dot" style="background:#fbbf24"></span> All Exams
+        <span class="count" id="count-all">—</span>
+      </div>
+      <div class="sidebar-item" onclick="filterExam('pgee')">
+        <span class="dot" style="background:#4ade80"></span> PGEE
+        <span class="count" id="count-pgee">—</span>
+      </div>
+      <div class="sidebar-item" onclick="filterExam('pgcat')">
+        <span class="dot" style="background:#60a5fa"></span> PGCAT-IIITD
+        <span class="count" id="count-pgcat">—</span>
+      </div>
+      <div class="sidebar-item" onclick="filterExam('bits')">
+        <span class="dot" style="background:#c084fc"></span> BITS HD
+        <span class="count" id="count-bits">—</span>
+      </div>
+    </div>
+    <div class="sidebar-section" style="margin-top:auto; padding-top:16px; border-top:1px solid var(--border);">
+      <div style="padding:8px; font-size:11px; color:var(--text3);" id="sidebar-progress-info">
+        Loading progress...
+      </div>
+    </div>
+  </div>
+
+  <!-- MAIN -->
+  <div class="main">
+    <div class="page-header">
+      <div class="page-header-top">
+        <div>
+          <div class="page-title" id="page-title">📋 Syllabus Tracker</div>
+          <div class="page-subtitle" id="page-subtitle">Track your prep across PGEE, PGCAT-IIITD & BITS HD</div>
+        </div>
+        <div style="display:flex;gap:8px;align-items:center;">
+          <button class="filter-btn" onclick="resetAll()" style="font-size:11px;">Reset Progress</button>
+        </div>
+      </div>
+      <div class="tabs">
+        <div class="tab active" id="tab-tracker" onclick="switchView('tracker')">📋 Tracker</div>
+        <div class="tab" id="tab-plan" onclick="switchView('plan')">📅 Study Plan</div>
+        <div class="tab" id="tab-priority" onclick="switchView('priority')">🔥 Priority Topics</div>
+      </div>
+    </div>
+
+    <div class="content">
+      <!-- STATS -->
+      <div class="stats-row">
+        <div class="stat-card">
+          <div class="stat-label">Total Topics</div>
+          <div class="stat-val" style="color:var(--accent)" id="stat-total">0</div>
+          <div class="stat-sub">across all exams</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">Completed</div>
+          <div class="stat-val" style="color:var(--green)" id="stat-done">0</div>
+          <div class="stat-sub">topics checked</div>
+          <div class="progress-bar"><div class="progress-fill" id="prog-done" style="background:var(--green);width:0%"></div></div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">High Priority</div>
+          <div class="stat-val" style="color:var(--red)" id="stat-high">0</div>
+          <div class="stat-sub">in all 3 exams</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">Remaining</div>
+          <div class="stat-val" style="color:var(--yellow)" id="stat-rem">0</div>
+          <div class="stat-sub">to go</div>
+        </div>
+      </div>
+
+      <!-- TRACKER VIEW -->
+      <div class="tab-content active" id="view-tracker">
+        <div class="filter-row">
+          <span class="filter-label">Filter by:</span>
+          <button class="filter-btn active" onclick="setFilter('all',this)">All</button>
+          <button class="filter-btn" onclick="setFilter('pgee',this)">PGEE</button>
+          <button class="filter-btn" onclick="setFilter('pgcat',this)">PGCAT-IIITD</button>
+          <button class="filter-btn" onclick="setFilter('bits',this)">BITS HD</button>
+          <button class="filter-btn" onclick="setFilter('common',this)">🔥 Common to All</button>
+          <button class="filter-btn" onclick="setFilter('pending',this)">Pending only</button>
+        </div>
+        <div id="topic-container"></div>
+      </div>
+
+      <!-- PLAN VIEW -->
+      <div class="tab-content" id="view-plan">
+        <div id="plan-container"></div>
+      </div>
+
+      <!-- PRIORITY VIEW -->
+      <div class="tab-content" id="view-priority">
+        <div id="priority-container"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+const DATA = {
+  categories: [
+    {
+      id: "engmath",
+      name: "Engineering Mathematics",
+      emoji: "🔢",
+      topics: [
+        { id:"linalg", name:"Linear Algebra (Matrices, Rank, Determinants, Eigenvalues)", exams:["pgee","pgcat","bits"], priority:"high" },
+        { id:"calc-basic", name:"Calculus — Limits, Continuity, Differentiability", exams:["pgee","pgcat","bits"], priority:"high" },
+        { id:"calc-int", name:"Integration & Differentiation", exams:["pgee","pgcat","bits"], priority:"high" },
+        { id:"calc-series", name:"Convergence & Divergence of Series", exams:["pgee","pgcat","bits"], priority:"high" },
+        { id:"calc-maxmin", name:"Maxima, Minima, Mean Value Theorem", exams:["pgee","pgcat","bits"], priority:"high" },
+        { id:"calc-partial", name:"Partial Derivatives", exams:["pgee","pgcat","bits"], priority:"high" },
+        { id:"ode", name:"Ordinary Differential Equations (ODE) & Applications", exams:["pgee","pgcat","bits"], priority:"high" },
+        { id:"ivbvp", name:"Initial & Boundary Value Problems", exams:["pgee","pgcat","bits"], priority:"high" },
+        { id:"mvf", name:"Functions of Several Variables — Gradient, Directional Derivatives", exams:["pgcat","bits"], priority:"medium" },
+        { id:"vecalc", name:"Vector Calculus — Double/Triple Integrals, Green/Gauss/Stokes", exams:["bits"], priority:"medium" },
+        { id:"complex", name:"Complex Variables — Cauchy's Theorem, Laurent Series, Residues", exams:["bits"], priority:"medium" },
+        { id:"fourier", name:"Fourier Series & Laplace Transform", exams:["bits"], priority:"medium" },
+        { id:"pde", name:"Partial Differential Equations", exams:["bits"], priority:"medium" },
+        { id:"nummethod", name:"Numerical Methods (Newton's, Trapezoidal, Simpson's, LU)", exams:["bits"], priority:"medium" },
+        { id:"prob", name:"Probability & Statistics (Distributions, CLT, Regression)", exams:["bits","pgcat"], priority:"medium" },
+      ]
+    },
+    {
+      id: "cse-core",
+      name: "Core Computer Science",
+      emoji: "💻",
+      topics: [
+        { id:"ds", name:"Data Structures (Lists, Trees, Graphs, Hash Tables)", exams:["pgee","pgcat","bits"], priority:"high" },
+        { id:"algo", name:"Algorithms — Sorting, Searching, Complexity", exams:["pgee","pgcat","bits"], priority:"high" },
+        { id:"daa", name:"Design & Analysis — Divide-Conquer, DP, Greedy, NP-Completeness", exams:["pgcat","bits"], priority:"high" },
+        { id:"os", name:"Operating Systems (Scheduling, Memory, Deadlock, FS)", exams:["pgee","pgcat","bits"], priority:"high" },
+        { id:"cn", name:"Computer Networks (TCP/IP, Routing, Security, Application Layer)", exams:["pgee","pgcat","bits"], priority:"high" },
+        { id:"db", name:"Databases (SQL, Normalization, Transactions, Indexing)", exams:["pgee","pgcat","bits"], priority:"high" },
+        { id:"discmath", name:"Discrete Mathematics & Probability Theory", exams:["pgee","pgcat","bits"], priority:"high" },
+        { id:"diglogic", name:"Digital Logic (Combinational & Sequential Design)", exams:["pgee","pgcat","bits"], priority:"high" },
+        { id:"cprog", name:"C Programming", exams:["pgee"], priority:"medium" },
+        { id:"toc", name:"Theory of Computation (Automata, Turing Machines, Decidability)", exams:["pgcat","bits"], priority:"high" },
+        { id:"compiler", name:"Compiler Construction (Lexical, Parsing, Code Gen)", exams:["pgcat","bits"], priority:"medium" },
+        { id:"arch", name:"Computer Organization & Architecture (Pipelining, Cache, ISA)", exams:["pgcat","bits"], priority:"medium" },
+        { id:"microproc", name:"Microprocessors (8085/8086, Assembly Programming)", exams:["bits"], priority:"low" },
+      ]
+    },
+    {
+      id: "reasoning",
+      name: "English & Logical Reasoning",
+      emoji: "🧠",
+      topics: [
+        { id:"grammar", name:"English Grammar (Tense, Voice, Transformation)", exams:["bits"], priority:"medium" },
+        { id:"vocab", name:"Vocabulary (Synonyms, Antonyms, Analogy)", exams:["bits"], priority:"medium" },
+        { id:"rc", name:"Reading Comprehension", exams:["bits"], priority:"medium" },
+        { id:"verbal", name:"Verbal Reasoning (Analogy, Series, Classification)", exams:["bits"], priority:"medium" },
+        { id:"nonverbal", name:"Non-Verbal Reasoning (Pattern, Figure Matrix)", exams:["bits"], priority:"low" },
+      ]
+    }
+  ],
+  studyPlan: [
+    {
+      week: "W 1–2",
+      color: "#f87171",
+      title: "Linear Algebra + Basic Calculus",
+      topics: "Matrices, Determinants, Eigenvalues · Limits, Continuity, Differentiation rules · Integration basics",
+      tags: ["pgee","pgcat","bits","high-priority"],
+      practice: "10 GATE PY Qs/day on Lin. Algebra · 5 integration problems"
+    },
+    {
+      week: "W 3–4",
+      color: "#fb923c",
+      title: "Advanced Calculus + ODEs",
+      topics: "Series convergence · Maxima/Minima · Partial Derivatives · Chain Rule · ODEs (1st & 2nd order) · Boundary Value Problems",
+      tags: ["pgee","pgcat","bits","high-priority"],
+      practice: "15 PY Qs/day from GATE MA/Engineering Math"
+    },
+    {
+      week: "W 5–6",
+      color: "#fbbf24",
+      title: "Data Structures + Algorithms",
+      topics: "Arrays, Linked Lists, Stacks, Queues · Trees (BST, AVL, Heap) · Graphs (BFS, DFS, Dijkstra) · Hash Tables · Sorting Algorithms",
+      tags: ["pgee","pgcat","bits","high-priority"],
+      practice: "LeetCode Easy/Medium (10/day) · GATE DS PY Qs"
+    },
+    {
+      week: "W 7",
+      color: "#4ade80",
+      title: "Design & Analysis of Algorithms",
+      topics: "Divide & Conquer · Dynamic Programming · Greedy · Backtracking · NP-Completeness · Lower Bound Analysis",
+      tags: ["pgcat","bits"],
+      practice: "GATE Algo PY Qs · 5 DP problems/day on LeetCode"
+    },
+    {
+      week: "W 8–9",
+      color: "#34d399",
+      title: "OS + Computer Networks",
+      topics: "Process Scheduling, Synchronization, Deadlock · Memory Management, Paging · TCP/IP, Routing Protocols · Network Security Basics",
+      tags: ["pgee","pgcat","bits","high-priority"],
+      practice: "GATE OS + CN PY Qs · Kurose-Ross chapter exercises"
+    },
+    {
+      week: "W 10",
+      color: "#60a5fa",
+      title: "Databases + Digital Logic",
+      topics: "ER Model, SQL, Normalization up to 4NF · Indexing, Query Optimization · Combinational/Sequential Logic · Counters, Registers",
+      tags: ["pgee","pgcat","bits","high-priority"],
+      practice: "SQL practice on HackerRank · GATE DB + DL PY Qs"
+    },
+    {
+      week: "W 11",
+      color: "#818cf8",
+      title: "Discrete Math + Theory of Computation",
+      topics: "Set theory, Logic, Counting, Recurrence · Regular Languages, Finite Automata · CFG, PDA · Turing Machines, Decidability",
+      tags: ["pgee","pgcat","bits"],
+      practice: "GATE TOC + DM PY Qs · 2 past papers (PGCAT-IIITD style)"
+    },
+    {
+      week: "W 12",
+      color: "#c084fc",
+      title: "BITS-only: Complex Variables + Numerical + Compilers",
+      topics: "Cauchy's Theorem, Laurent Series · Newton's Method, LU Decomposition · Compiler phases, Parsing, Code Generation",
+      tags: ["bits"],
+      practice: "BITS HD sample papers · Fourier/Laplace problem sets"
+    },
+    {
+      week: "W 13–14",
+      color: "#f472b6",
+      title: "English & Logical Reasoning (BITS HD only)",
+      topics: "Grammar revision · Reading comprehension timed practice · Verbal & Non-verbal reasoning sets",
+      tags: ["bits"],
+      practice: "2 full mock tests · 30 LR questions/day"
+    },
+    {
+      week: "W 15–16",
+      color: "#a78bfa",
+      title: "Full Revision + Mock Tests",
+      topics: "Revise all formula sheets · 1 full mock per exam type (PGEE, PGCAT, BITS) · Focus on weak areas from previous weeks",
+      tags: ["pgee","pgcat","bits"],
+      practice: "3 full mocks/week · Timed GATE paper practice · Error log review"
+    }
+  ]
+};
+
+let checked = JSON.parse(localStorage.getItem('pg_checked') || '{}');
+let currentFilter = 'all';
+let currentView = 'tracker';
+
+function save() { localStorage.setItem('pg_checked', JSON.stringify(checked)); }
+
+function toggleTopic(id) {
+  checked[id] = !checked[id];
+  save();
+  render();
+  updateStats();
+}
+
+function getBadge(exam) {
+  const map = { pgee: 'badge-pgee', pgcat: 'badge-pgcat', bits: 'badge-bits', all: 'badge-all', 'high-priority': 'badge-high' };
+  const labels = { pgee: 'PGEE', pgcat: 'PGCAT', bits: 'BITS', all: 'ALL', 'high-priority': '🔥 HIGH' };
+  return `<span class="badge ${map[exam]||'badge-all'}">${labels[exam]||exam}</span>`;
+}
+
+function getPriorityColor(p) {
+  return { high: 'var(--red)', medium: 'var(--yellow)', low: 'var(--text3)' }[p] || 'var(--text3)';
+}
+
+function allTopics() {
+  return DATA.categories.flatMap(c => c.topics);
+}
+
+function updateStats() {
+  const topics = allTopics();
+  const total = topics.length;
+  const done = topics.filter(t => checked[t.id]).length;
+  const high = topics.filter(t => t.exams.length === 3 || t.priority === 'high').length;
+  document.getElementById('stat-total').textContent = total;
+  document.getElementById('stat-done').textContent = done;
+  document.getElementById('stat-high').textContent = topics.filter(t => t.exams.length === 3).length;
+  document.getElementById('stat-rem').textContent = total - done;
+  const pct = total ? Math.round(done/total*100) : 0;
+  document.getElementById('prog-done').style.width = pct + '%';
+
+  // counts per exam
+  ['pgee','pgcat','bits'].forEach(e => {
+    const n = topics.filter(t => t.exams.includes(e)).length;
+    document.getElementById('count-'+e).textContent = n;
+  });
+  document.getElementById('count-all').textContent = topics.filter(t=>t.exams.length===3).length;
+  document.getElementById('sidebar-progress-info').innerHTML = `
+    <b style="color:var(--accent)">${pct}%</b> complete · ${done}/${total} topics
+  `;
+}
+
+function shouldShow(topic) {
+  if (currentFilter === 'all') return true;
+  if (currentFilter === 'pending') return !checked[topic.id];
+  if (currentFilter === 'common') return topic.exams.length === 3;
+  return topic.exams.includes(currentFilter);
+}
+
+function render() {
+  const container = document.getElementById('topic-container');
+  let html = '';
+  DATA.categories.forEach(cat => {
+    const visible = cat.topics.filter(shouldShow);
+    if (!visible.length) return;
+    const catDone = cat.topics.filter(t => checked[t.id]).length;
+    html += `
+      <div class="topic-group">
+        <div class="topic-group-header" onclick="toggleGroup('${cat.id}')">
+          <span>${cat.emoji}</span>
+          <span class="topic-group-title">${cat.name}</span>
+          <span style="font-size:11px;color:var(--text3);font-family:'JetBrains Mono',monospace;">${catDone}/${cat.topics.length}</span>
+          <span class="chevron open" id="chev-${cat.id}">▶</span>
+        </div>
+        <div class="topic-list" id="grp-${cat.id}">
+    `;
+    visible.forEach(t => {
+      const done = !!checked[t.id];
+      html += `
+        <div class="topic-row ${done ? 'done' : ''}" onclick="toggleTopic('${t.id}')">
+          <div class="checkbox ${done ? 'checked' : ''}">
+            <svg width="10" height="8" viewBox="0 0 10 8" fill="none">
+              <path d="M1 4L3.5 6.5L9 1" stroke="white" stroke-width="1.8" stroke-linecap="round"/>
+            </svg>
+          </div>
+          <div class="priority-dot" style="background:${getPriorityColor(t.priority)}"></div>
+          <span class="topic-name">${t.name}</span>
+          <div class="topic-exams">${t.exams.map(e=>getBadge(e)).join('')}</div>
+        </div>
+      `;
+    });
+    html += `</div></div>`;
+  });
+  container.innerHTML = html;
+}
+
+function toggleGroup(id) {
+  const grp = document.getElementById('grp-' + id);
+  const chev = document.getElementById('chev-' + id);
+  if (grp.style.display === 'none') {
+    grp.style.display = '';
+    chev.classList.add('open');
+  } else {
+    grp.style.display = 'none';
+    chev.classList.remove('open');
+  }
+}
+
+function setFilter(f, btn) {
+  currentFilter = f;
+  document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  render();
+}
+
+function filterExam(e) {
+  currentFilter = e;
+  switchView('tracker');
+  document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+  document.querySelector('.filter-btn').classList.add('active');
+}
+
+function renderPlan() {
+  let html = `
+    <div style="margin-bottom:20px">
+      <div style="font-size:16px;font-weight:700;margin-bottom:4px">📅 16-Week Study Plan</div>
+      <div style="font-size:13px;color:var(--text2)">Structured to cover all 3 exams — start today and pace yourself.</div>
+    </div>
+    <div class="plan-grid">
+  `;
+  DATA.studyPlan.forEach(w => {
+    html += `
+      <div class="plan-week-label" style="color:${w.color};">${w.week}</div>
+      <div class="plan-items">
+        <div class="plan-card" style="border-left-color:${w.color}">
+          <div class="plan-card-title">${w.title}</div>
+          <div class="plan-card-topics">${w.topics}</div>
+          <div style="margin-top:6px;font-size:11px;color:var(--text3)"><b style="color:var(--text2)">Practice:</b> ${w.practice}</div>
+          <div class="plan-card-tags">${w.tags.map(t => getBadge(t)).join('')}</div>
+        </div>
+      </div>
+    `;
+  });
+  html += `</div>`;
+  document.getElementById('plan-container').innerHTML = html;
+}
+
+function renderPriority() {
+  const common = allTopics().filter(t => t.exams.length === 3);
+  const pgeeOnly = allTopics().filter(t => t.exams.includes('pgee') && t.exams.length < 3);
+  const bitsOnly = allTopics().filter(t => t.exams.includes('bits') && !t.exams.includes('pgee') && !t.exams.includes('pgcat'));
+
+  let html = `
+    <div style="font-size:16px;font-weight:700;margin-bottom:4px">🔥 Priority Topics</div>
+    <div style="font-size:13px;color:var(--text2);margin-bottom:20px">Focus here first — these topics appear across all 3 exams.</div>
+  `;
+
+  html += `<div class="section-heading"><h2>🏆 Common to All 3 Exams (Highest Priority)</h2><div class="section-divider"></div></div>`;
+  common.forEach(t => {
+    const done = !!checked[t.id];
+    html += `
+      <div class="topic-row ${done?'done':''}" onclick="toggleTopic('${t.id}')">
+        <div class="checkbox ${done?'checked':''}"><svg width="10" height="8" viewBox="0 0 10 8" fill="none"><path d="M1 4L3.5 6.5L9 1" stroke="white" stroke-width="1.8" stroke-linecap="round"/></svg></div>
+        <div class="priority-dot" style="background:var(--red)"></div>
+        <span class="topic-name">${t.name}</span>
+        <div class="topic-exams">${t.exams.map(e=>getBadge(e)).join('')}</div>
+      </div>`;
+  });
+
+  html += `<div class="section-heading" style="margin-top:24px"><h2>🔵 PGCAT + BITS HD (Not PGEE)</h2><div class="section-divider"></div></div>`;
+  allTopics().filter(t => t.exams.includes('pgcat') && t.exams.includes('bits') && !t.exams.includes('pgee')).forEach(t => {
+    const done = !!checked[t.id];
+    html += `
+      <div class="topic-row ${done?'done':''}" onclick="toggleTopic('${t.id}')">
+        <div class="checkbox ${done?'checked':''}"><svg width="10" height="8" viewBox="0 0 10 8" fill="none"><path d="M1 4L3.5 6.5L9 1" stroke="white" stroke-width="1.8" stroke-linecap="round"/></svg></div>
+        <div class="priority-dot" style="background:var(--blue)"></div>
+        <span class="topic-name">${t.name}</span>
+        <div class="topic-exams">${t.exams.map(e=>getBadge(e)).join('')}</div>
+      </div>`;
+  });
+
+  html += `<div class="section-heading" style="margin-top:24px"><h2>🟣 BITS HD Only (Extra topics)</h2><div class="section-divider"></div></div>`;
+  bitsOnly.forEach(t => {
+    const done = !!checked[t.id];
+    html += `
+      <div class="topic-row ${done?'done':''}" onclick="toggleTopic('${t.id}')">
+        <div class="checkbox ${done?'checked':''}"><svg width="10" height="8" viewBox="0 0 10 8" fill="none"><path d="M1 4L3.5 6.5L9 1" stroke="white" stroke-width="1.8" stroke-linecap="round"/></svg></div>
+        <div class="priority-dot" style="background:var(--purple)"></div>
+        <span class="topic-name">${t.name}</span>
+        <div class="topic-exams">${t.exams.map(e=>getBadge(e)).join('')}</div>
+      </div>`;
+  });
+
+  document.getElementById('priority-container').innerHTML = html;
+}
+
+function switchView(v) {
+  currentView = v;
+  ['tracker','plan','priority'].forEach(id => {
+    document.getElementById('view-'+id).classList.toggle('active', id===v);
+    document.getElementById('tab-'+id).classList.toggle('active', id===v);
+  });
+  document.querySelectorAll('.sidebar-item').forEach(el => el.classList.remove('active'));
+  if (v === 'tracker') {
+    document.querySelectorAll('.sidebar-item')[0].classList.add('active');
+    document.getElementById('page-title').textContent = '📋 Syllabus Tracker';
+    document.getElementById('page-subtitle').textContent = 'Check off topics as you study them';
+    render();
+  } else if (v === 'plan') {
+    document.querySelectorAll('.sidebar-item')[1].classList.add('active');
+    document.getElementById('page-title').textContent = '📅 Study Plan';
+    document.getElementById('page-subtitle').textContent = '16-week roadmap to cover all 3 exams';
+    renderPlan();
+  } else {
+    document.querySelectorAll('.sidebar-item')[2].classList.add('active');
+    document.getElementById('page-title').textContent = '🔥 Priority Topics';
+    document.getElementById('page-subtitle').textContent = 'Focus on these first for maximum exam coverage';
+    renderPriority();
+  }
+}
+
+function resetAll() {
+  if (confirm('Reset all progress?')) {
+    checked = {};
+    save();
+    render();
+    updateStats();
+  }
+}
+
+// Init
+render();
+updateStats();
+</script>
+</body>
+</html>
